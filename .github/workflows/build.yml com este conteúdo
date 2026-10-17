@@ -25,3 +25,5 @@ jobs:
         with:
           name: RPG-Survival-JAR
           path: target/*.jar
+          on:
+               workflow_dispatch:
