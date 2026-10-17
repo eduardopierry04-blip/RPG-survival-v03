@@ -3,27 +3,48 @@ name: Compilar RPG Survival
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'RPG-Survival-Starter-v0.3.0.zip'
+      - '.github/workflows/build.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Configurar Java 21
+    steps:
+      - name: Baixar arquivos
+        uses: actions/checkout@v4
+
+      - name: Preparar Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
 
+      - name: Extrair projeto
+        run: |
+          mkdir -p extraido
+          unzip -q RPG-Survival-Starter-v0.3.0.zip -d extraido
+          POM="$(find extraido -name pom.xml -print -quit)"
+
+          if [ -z "$POM" ]; then
+            echo "ERRO: pom.xml não encontrado dentro do ZIP"
+            exit 1
+          fi
+
+          echo "PROJECT_DIR=$(dirname "$POM")" >> "$GITHUB_ENV"
+
       - name: Compilar plugin
-        run: mvn --batch-mode clean package
+        run: |
+          cd "$PROJECT_DIR"
+          mvn --batch-mode clean package
 
       - name: Disponibilizar arquivo JAR
         uses: actions/upload-artifact@v4
         with:
           name: RPG-Survival-JAR
-          path: target/*.jar
-          on:
-               workflow_dispatch:
+          path: extraido/**/target/*.jar
+          if-no-files-found: error
+:
